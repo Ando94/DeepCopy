@@ -1,0 +1,106 @@
+import java.lang.reflect.Field;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.stream.Collectors;
+import java.util.stream.Stream; 
+
+class Man {
+    private String name;
+    private int age;
+    private List<String> favoriteBooks;
+
+    public Man() {
+
+    }
+
+    public Man(String name, int age, List<String> favoriteBooks) {
+        this.name = name;
+        this.age = age;
+        this.favoriteBooks = favoriteBooks;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    public List<String> getFavoriteBooks() {
+        return favoriteBooks;
+    }
+
+    public void setFavoriteBooks(List<String> favoriteBooks) {
+        this.favoriteBooks = favoriteBooks;
+    }
+
+}
+
+public class ObjectsDeepCopy {
+
+    static <T> T deepCopy(T original) {
+        Class<?> originalClass = original.getClass();
+        Field[] fields = originalClass.getDeclaredFields();
+        T copy;
+        try {
+            copy = (T)originalClass
+            .getDeclaredConstructor().newInstance();
+        } catch(Exception e) {
+            return null;
+        }
+        for (Field field : fields) {
+            field.setAccessible(true);
+            try {
+                Field copiedField = copy.getClass()
+                .getDeclaredField(field.getName());
+                copiedField.setAccessible(true);
+                if(field.get(original) instanceof Collection) {
+                    copiedField.set(copy, ((Collection)field.get(original))
+                    .stream()
+                    .collect(Collectors.toList()));
+                } else {
+                    copiedField.set(copy, field.get(original));
+                }
+            } catch (Exception e) {
+                return null;
+            }
+        }
+        return copy;
+    }
+
+    public static void main(String[] args) {
+        ArrayList<String> books = new ArrayList<String>();
+        books.add("George Orwell - 1984");
+        books.add("F. Dostoevsky - Crime and Punishment");
+        Man man = new Man("John", 15, books);
+        System.out.println("Original object");
+        showObjectDetails(man);
+        System.out.println("-------------------");
+        Man copiedMan = deepCopy(man);
+        System.out.println("Copied object");
+        showObjectDetails(copiedMan);
+        copiedMan.setName("Anatoly");
+        copiedMan.setAge(24);
+        copiedMan.getFavoriteBooks().set(0, "Leo Tolstoy - War and Peace");
+        System.out.println("\nAfter changing copied object details");
+        System.out.println("Original object");
+        showObjectDetails(man);
+        System.out.println("-------------------");
+        System.out.println("Copied object");
+        showObjectDetails(copiedMan);
+    }
+    
+    static void showObjectDetails(Man man){
+        System.out.println("name = " + man.getName() + "\nage = " + man.getAge() + "\nfavorite books = " + man.getFavoriteBooks());
+    } 
+}
